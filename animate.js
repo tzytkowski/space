@@ -19,7 +19,7 @@ renderer.shadowMap.type = THREE.BasicShadowMap;
 document.body.appendChild(renderer.domElement);
 
 const cameraTarget = new THREE.Vector3(0, 0, 0);
-camera.position.set(-40, 135, -680);
+camera.position.set(20, 125, -480);
 camera.lookAt(cameraTarget);
 
 
