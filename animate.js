@@ -4,7 +4,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(
-  58, // Field of View
+  58, // Field of View 
   window.innerWidth / window.innerHeight,
   0.1,
   85000
@@ -49,7 +49,6 @@ controls.update();
 //LIGHT HELPER
 //const lightHelper = new THREE.DirectionalLightHelper( light, 5 );
 //scene.add( lightHelper );
-
 
 
 /*
