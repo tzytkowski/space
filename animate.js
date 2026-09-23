@@ -19,7 +19,7 @@ renderer.shadowMap.type = THREE.BasicShadowMap;
 document.body.appendChild(renderer.domElement);
 
 const cameraTarget = new THREE.Vector3(0, 0, 0);
-camera.position.set(20, 125, -480);
+camera.position.set(20, 125, -280);
 camera.lookAt(cameraTarget);
 
 
@@ -118,13 +118,12 @@ const BODY_RADII = {
 
 // SUN — a complete sphere gives the 2:1 solar map its intended longitude seam.
 var sunGeometry = new THREE.SphereGeometry(BODY_RADII.sun, 96, 64);
-var sunSkin = loadColorTexture("planetImages/sun.png");
-var sunTexture = loadColorTexture("planetImages/sunny.jpg");
+var sunTexture = loadColorTexture("planetImages/sun.jpg");
 var sunMaterial = new THREE.MeshStandardMaterial({ 
-  map: sunSkin, 
+  map: sunTexture,
   normalMap: sunNormal,
   normalScale: new THREE.Vector2(0.35, 0.35),
-  emissiveMap: sunTexture, //Use the same texture for emissive to make the sun glow
+  emissiveMap: sunTexture,
   emissive: 0xffffff, 
   emissiveIntensity: 4.5, 
   roughness: 1,
@@ -134,16 +133,15 @@ var sun = new THREE.Mesh(sunGeometry, sunMaterial);
 sun.position.set(0, 0, 0);
 scene.add(sun);
 
-
 // DISTANT STAR FIELD
 // Keep stars as a deep all-sky backdrop far beyond the solar system, so camera
 // pans and tilts still reveal twinkling points without placing stars near the
 // planets.
 const starLayers = [];
 const starfieldLayers = [
-  { count: isMobileViewport ? 2600 : 3800, radiusMin: 36000, radiusMax: 46000, sizeMin: 28, sizeMax: 70, opacity: 0.48, twinkle: 0.52 },
-  { count: isMobileViewport ? 5200 : 8000, radiusMin: 52000, radiusMax: 66000, sizeMin: 42, sizeMax: 95, opacity: 0.5, twinkle: 0.44 },
-  { count: isMobileViewport ? 5000 : 7000, radiusMin: 72000, radiusMax: 84000, sizeMin: 55, sizeMax: 120, opacity: 0.42, twinkle: 0.32 },
+  { count: 14600, radiusMin: 36000, radiusMax: 46000, sizeMin: 28, sizeMax: 70, opacity: 0.48, twinkle: 0.52 },
+  { count: 32000, radiusMin: 52000, radiusMax: 66000, sizeMin: 42, sizeMax: 95, opacity: 0.5, twinkle: 0.44 },
+  { count: 28000, radiusMin: 72000, radiusMax: 84000, sizeMin: 55, sizeMax: 120, opacity: 0.42, twinkle: 0.32 },
 ];
 
 function createStarfieldMaterial() {
@@ -389,7 +387,7 @@ var saturnRingMaterial = new THREE.MeshStandardMaterial({
 });
 var saturnRing = new THREE.Mesh(saturnRingGeometry, saturnRingMaterial);
 saturnRing.position.set(0, 0, 0);
-saturnRing.rotation.x = Math.PI / 2;
+saturnRing.rotation.set(Math.PI / 2, 0, THREE.MathUtils.degToRad(26.73));
 scene.add(saturnRing);
 
 //URANUS
@@ -529,7 +527,7 @@ const orbitalBodies = [
 // Sidereal rotation periods in Earth days. With one year set to 60 seconds,
 // this preserves the real day-to-year relationship (including retrograde spin).
 const rotatingBodies = [
-  { body: sun, periodDays: 1200.5, tilt: 7.25, phase: 0 },
+  { body: sun, periodDays: -2800.5, tilt: 7.25, phase: 0 },
   { body: mercury, periodDays: 58.646, tilt: 0.034, phase: 0.6 },
   { body: venus, periodDays: -243.025, tilt: 177.36, phase: 1.8 },
   { body: earth, periodDays: 0.99727, tilt: 23.44, phase: 0.2 },
