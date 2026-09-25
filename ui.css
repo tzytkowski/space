@@ -1,5 +1,5 @@
 html, body { overflow: hidden; }
-body { margin: 0; background: #020711; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+body { margin: 0; background: #000000; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 canvas { display: block; }
 
 #controls-panel {
@@ -11,25 +11,45 @@ canvas { display: block; }
 }
 #controls-panel .lil-gui {
   width: 100%;
-  --background-color: rgba(12, 22, 38, .58);
-  --text-color: #eaf3ff;
-  --title-background-color: rgba(30, 47, 68, .48);
-  --widget-color: rgba(29, 52, 74, .56);
-  --hover-color: rgba(41, 69, 97, .7);
-  --focus-color: rgba(52, 92, 127, .75);
+  --background-color: rgba(24, 24, 26, .26);
+  --text-color: #f0f0ec;
+  --title-text-color: #f0f0ec;
+  --title-background-color: rgba(50, 50, 52, .34);
+  --widget-color: rgba(66, 66, 68, .34);
+  --hover-color: rgba(84, 84, 86, .48);
+  --focus-color: rgba(102, 102, 104, .58);
   --number-color: #ffc98c;
-  --string-color: #9dd7fa;
+  --string-color: #d8d8d2;
   --font-size: 12px;
   --input-font-size: 12px;
   --padding: 6px;
-  border: 1px solid rgba(165, 205, 243, .22);
+  border: 1px solid rgba(214, 214, 207, .2);
   border-radius: 13px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, .45);
   overflow: hidden;
   backdrop-filter: blur(22px) saturate(145%);
   -webkit-backdrop-filter: blur(22px) saturate(145%);
 }
-#controls-panel .lil-gui .title { font-weight: 700; letter-spacing: .04em; }
+#controls-panel .lil-gui .title {
+  color: #ffffff !important;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+#controls-panel .lil-gui select {
+  color: #f0f0ec;
+  background: rgba(12, 12, 14, .72);
+  border: 1px solid rgba(214, 214, 207, .2);
+  border-radius: 5px;
+  outline: none;
+}
+#controls-panel .lil-gui select:focus-visible {
+  border-color: rgba(255, 201, 140, .72);
+  box-shadow: 0 0 0 2px rgba(255, 201, 140, .16);
+}
+#controls-panel .lil-gui select option {
+  color: #f0f0ec;
+  background: #171719;
+}
 
 .body-info {
   position: fixed;
@@ -39,9 +59,9 @@ canvas { display: block; }
   width: min(292px, calc(100vw - 32px));
   box-sizing: border-box;
   padding: 21px 22px 19px;
-  color: #eaf3ff;
-  background: linear-gradient(155deg, rgba(23, 40, 59, .97), rgba(9, 18, 34, .96));
-  border: 1px solid rgba(165, 205, 243, .24);
+  color: #f0f0ec;
+  background: linear-gradient(155deg, rgba(50, 50, 52, .34), rgba(17, 17, 18, .3));
+  border: 1px solid rgba(214, 214, 207, .22);
   border-radius: 13px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, .45);
   backdrop-filter: blur(22px) saturate(145%);
@@ -50,10 +70,10 @@ canvas { display: block; }
 .body-info[hidden] { display: none; }
 .body-info__eyebrow { color: #ffc98c; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; }
 .body-info h2 { margin: 7px 28px 10px 0; font-size: 23px; line-height: 1.1; font-weight: 650; }
-.body-info p { margin: 0 0 15px; color: #c9d7e9; font-size: 13px; line-height: 1.55; }
-.body-info a { color: #9dd7fa; font-size: 12px; font-weight: 650; text-decoration: none; }
+.body-info p { margin: 0 0 15px; color: #d0d0ca; font-size: 13px; line-height: 1.55; }
+.body-info a { color: #deded8; font-size: 12px; font-weight: 650; text-decoration: none; }
 .body-info a:hover, .body-info a:focus-visible { text-decoration: underline; }
-.body-info__close { position: absolute; top: 11px; right: 13px; border: 0; background: none; color: #a9bdd3; cursor: pointer; font-size: 24px; line-height: 1; }
+.body-info__close { position: absolute; top: 11px; right: 13px; border: 0; background: none; color: #bdbdb7; cursor: pointer; font-size: 24px; line-height: 1; }
 .body-info__close:hover { color: white; }
 
 @media (max-width: 600px) {

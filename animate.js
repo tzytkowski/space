@@ -9,7 +9,7 @@ import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.21.0/+esm";
 
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera(
-  58, // Field of View 
+  90, // Cinematic, slightly compressed field of view
   window.innerWidth / window.innerHeight,
   0.1,
   85000
@@ -40,7 +40,7 @@ composer.addPass(new RenderPass(scene, camera));
 // distant stars sharp while light can spill over nearby orbiting bodies.
 const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
-  0.32,
+  0.25,
   0.55,
   0.28
 );
@@ -115,8 +115,16 @@ function updateBloomScreenMask() {
   displayPass.uniforms.resolution.value.set(width, height);
 }
 
-const cameraTarget = new THREE.Vector3(0, 0, 0);
-camera.position.set(20, 125, -280);
+
+//CAMERA HELPER
+// const helper = new THREE.CameraHelper( camera );
+// scene.add( helper );
+
+
+// Start on a low three-quarter angle so the Sun anchors the frame while the
+// orbital plane recedes into depth instead of reading like a flat top-down map.
+const cameraTarget = new THREE.Vector3(0, 8, 0);
+camera.position.set(240, 64, -140);
 camera.lookAt(cameraTarget);
 
 
@@ -178,10 +186,6 @@ function stopFollowing() {
   focusState.body = null;
 }
 
-
-//CAMERA HELPER
-//const helper = new THREE.CameraHelper( camera );
-//scene.add( helper );
 
 //STAGE
 
@@ -307,6 +311,13 @@ const sunMaterial = new THREE.ShaderMaterial({
 
     void main() {
       vec3 p = normalize(vWorldPosition) * 3.1;
+      // Rotate the procedural surface pattern at the same deliberately slow
+      // pace as the Sun's axial rotation. Mesh rotation alone is not visible
+      // here because the noise is evaluated from world-space direction.
+      float rotationAngle = time * 0.1365;
+      mat2 rotation = mat2(cos(rotationAngle), -sin(rotationAngle),
+                           sin(rotationAngle), cos(rotationAngle));
+      p.xz = rotation * p.xz;
       p += vec3(time * 0.012, -time * 0.008, time * 0.01);
       float convection = fbm(p);
       float detail = fbm(p * 2.8 - vec3(3.0, 1.0, 2.0));
@@ -336,9 +347,9 @@ scene.add(sun);
 // planets.
 const starLayers = [];
 const starfieldLayers = [
-  { count: 14600, radiusMin: 36000, radiusMax: 46000, sizeMin: 28, sizeMax: 70, opacity: 0.48, twinkle: 0.52 },
-  { count: 16000, radiusMin: 52000, radiusMax: 66000, sizeMin: 42, sizeMax: 95, opacity: 0.5, twinkle: 0.44 },
-  { count: 14000, radiusMin: 72000, radiusMax: 84000, sizeMin: 55, sizeMax: 120, opacity: 0.42, twinkle: 0.32 },
+  { count: 14600, radiusMin: 36000, radiusMax: 46000, sizeMin: 28, sizeMax: 70, opacity: 0.18, twinkle: 0.52 },
+  { count: 16000, radiusMin: 52000, radiusMax: 66000, sizeMin: 42, sizeMax: 95, opacity: 0.25, twinkle: 0.44 },
+  { count: 14000, radiusMin: 72000, radiusMax: 84000, sizeMin: 55, sizeMax: 120, opacity: 0.12, twinkle: 0.32 },
 ];
 
 function createStarfieldMaterial() {
@@ -595,6 +606,7 @@ saturn.position.set(0, 0, 0);
 scene.add(saturn);
 
 // SATURN RING
+const SATURN_AXIAL_TILT = 26.7;
 // RingGeometry is flat like the source texture. Its default UVs project a
 // square across the ring, so remap them: image width follows the circumference
 // and its narrow height follows the radius.
@@ -618,19 +630,96 @@ function createRingGeometry(innerRadius, outerRadius, segments = 256) {
 }
 
 var saturnRingGeometry = createRingGeometry(BODY_RADII.saturn * 1.15, BODY_RADII.saturn * 2.35);
-var saturnRingTexture = loadColorTexture("planetImages/saturnring.png");
-var saturnRingMaterial = new THREE.MeshStandardMaterial({
-  map: saturnRingTexture,
+var saturnRingMaterial = new THREE.ShaderMaterial({
+  uniforms: {
+    time: { value: 0 },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    varying vec3 vWorldPosition;
+    varying vec3 vWorldNormal;
+
+    void main() {
+      vUv = uv;
+      vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+      vWorldPosition = worldPosition.xyz;
+      vWorldNormal = normalize(mat3(modelMatrix) * normal);
+      gl_Position = projectionMatrix * viewMatrix * worldPosition;
+    }
+  `,
+  fragmentShader: `
+    varying vec2 vUv;
+    varying vec3 vWorldPosition;
+    varying vec3 vWorldNormal;
+
+    uniform float time;
+
+    float hash(vec3 p) {
+      p = fract(p * 0.3183099 + vec3(0.1, 0.2, 0.3));
+      p *= 17.0;
+      return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+    }
+
+    float noise(vec3 p) {
+      vec3 i = floor(p);
+      vec3 f = fract(p);
+      f = f * f * (3.0 - 2.0 * f);
+      return mix(
+        mix(mix(hash(i), hash(i + vec3(1.0, 0.0, 0.0)), f.x),
+            mix(hash(i + vec3(0.0, 1.0, 0.0)), hash(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+        mix(mix(hash(i + vec3(0.0, 0.0, 1.0)), hash(i + vec3(1.0, 0.0, 1.0)), f.x),
+            mix(hash(i + vec3(0.0, 1.0, 1.0)), hash(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
+    }
+
+    float fbm(vec3 p) {
+      float value = 0.0;
+      value += noise(p) * 0.58;
+      p = p * 2.03 + 17.0;
+      value += noise(p) * 0.28;
+      p = p * 2.01 - 9.0;
+      value += noise(p) * 0.14;
+      return value;
+    }
+
+    void main() {
+      float radial = clamp(vUv.y, 0.0, 1.0);
+      float angle = atan(vWorldPosition.z, vWorldPosition.x);
+      float dust = fbm(vec3(radial * 32.0, angle * 3.0 + time * 0.015, 4.0));
+
+      // Fine radial ice/dust bands, with broad warm-gray variation between them.
+      float fineBands = 0.5 + 0.5 * sin(radial * 210.0 + dust * 5.0);
+      float broadBands = 0.5 + 0.5 * sin(radial * 42.0 + dust * 2.0);
+      float bandValue = mix(fineBands, broadBands, 0.22);
+      vec3 darkIce = vec3(0.12, 0.115, 0.105);
+      vec3 dustyIce = vec3(0.34, 0.31, 0.26);
+      vec3 paleIce = vec3(0.58, 0.53, 0.44);
+      vec3 brightIce = vec3(0.74, 0.69, 0.59);
+      vec3 color = mix(dustyIce, paleIce, smoothstep(0.25, 0.8, bandValue));
+      color = mix(color, brightIce, smoothstep(0.8, 1.0, bandValue) * 0.48);
+      color = mix(darkIce, color, 0.62 + dust * 0.28);
+
+      // The broad dark gaps mimic Saturn's most recognizable ring divisions.
+      float cassiniGap = 1.0 - smoothstep(0.565, 0.605, radial);
+      cassiniGap *= smoothstep(0.515, 0.565, radial);
+      float innerGap = 1.0 - smoothstep(0.295, 0.325, radial);
+      innerGap *= smoothstep(0.255, 0.295, radial);
+      float gapMask = max(cassiniGap, innerGap * 0.58);
+      color = mix(color, darkIce * 0.38, gapMask);
+
+      float edgeFade = smoothstep(0.0, 0.035, radial) * (1.0 - smoothstep(0.965, 1.0, radial));
+      float alpha = edgeFade * (0.46 + bandValue * 0.27) * (1.0 - gapMask * 0.78);
+      float warmLight = 0.86 + 0.14 * max(dot(normalize(vWorldNormal), normalize(vec3(0.8, 0.45, 0.35))), 0.0);
+      gl_FragColor = vec4(color * warmLight, alpha);
+    }
+  `,
   transparent: true,
-  alphaTest: 0.02,
+  alphaTest: 0.01,
   side: THREE.DoubleSide,
   depthWrite: false,
-  roughness: 0.65,
-  metalness: 0.0,
 });
 var saturnRing = new THREE.Mesh(saturnRingGeometry, saturnRingMaterial);
 saturnRing.position.set(0, 0, 0);
-saturnRing.rotation.set(Math.PI / 2, 0, THREE.MathUtils.degToRad(26.73));
+saturnRing.rotation.set(Math.PI / 2, 0, THREE.MathUtils.degToRad(SATURN_AXIAL_TILT));
 scene.add(saturnRing);
 
 //URANUS
@@ -834,12 +923,14 @@ const selectableBodies = new Map([
 ]);
 const infoPanel = document.getElementById("body-info");
 const uiState = { orbitLines: false, timeScale: 1, selectBody: "Choose a body" };
-const gui = new GUI({ container: document.getElementById("controls-panel"), title: "SOLAR SYSTEM" });
+const controlsPanel = document.getElementById("controls-panel");
+const gui = new GUI({ container: controlsPanel, title: "" });
+gui.close();
 gui.add(uiState, "orbitLines").name("Orbit lines").onChange((visible) => {
   orbitLines.forEach((line) => { line.visible = visible; });
 });
 gui.add(uiState, "timeScale", 0, 10, 0.1).name("Time speed");
-const bodyPicker = gui.add(uiState, "selectBody", ["Choose a body", ...selectableBodies.keys()]).name("NASA facts");
+const bodyPicker = gui.add(uiState, "selectBody", ["Choose a body", ...selectableBodies.keys()]).name("Body");
 
 function showBodyInfo(name) {
   const fact = nasaFacts[name];
@@ -886,13 +977,15 @@ renderer.domElement.addEventListener("pointerup", (event) => {
 // Sidereal rotation periods in Earth days. With one year set to 60 seconds,
 // this preserves the real day-to-year relationship (including retrograde spin).
 const rotatingBodies = [
-  { body: sun, periodDays: -2800.5, tilt: 7.25, phase: 0 },
+  // Deliberately slowed for the cinematic view: the surface still moves
+  // visibly, but the Sun remains a calm, slowly turning focal point.
+  { body: sun, periodDays: -8000, tilt: 7.25, phase: 0 },
   { body: mercury, periodDays: 58.646, tilt: 0.034, phase: 0.6 },
   { body: venus, periodDays: -243.025, tilt: 177.36, phase: 1.8 },
   { body: earth, periodDays: 0.99727, tilt: 23.44, phase: 0.2 },
   { body: mars, periodDays: 1.02596, tilt: 25.19, phase: 2.5 },
   { body: jupiter, periodDays: 0.41354, tilt: 3.13, phase: 0.9 },
-  { body: saturn, periodDays: 0.44401, tilt: 26.73, phase: 2.1 },
+  { body: saturn, periodDays: 0.44401, tilt: SATURN_AXIAL_TILT, phase: 2.1 },
   { body: uranus, periodDays: -0.71833, tilt: 97.77, phase: 1.5 },
   { body: neptune, periodDays: 0.67125, tilt: 28.32, phase: 0.4 },
   ...satelliteSystems.map((satellite) => ({
@@ -972,6 +1065,7 @@ function animate() {
   const delta = Math.min(clock.getDelta(), 0.05);
   simulationElapsed += delta * baseSimulationRate * uiState.timeScale;
   sunMaterial.uniforms.time.value = simulationElapsed;
+  saturnRingMaterial.uniforms.time.value = simulationElapsed;
   updateOrbitalBodies(simulationElapsed);
   updateSatelliteSystems(simulationElapsed);
   updateAxialRotations(simulationElapsed);
