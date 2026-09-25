@@ -1,17 +1,38 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8" />
     <title>Space</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+
     <style>
       body {
         margin: 0;
       }
   
     </style>
-    <script type="module" crossorigin src="/assets/index-97cb442d.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.152.2/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.152.2/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/index-7fafe95c.js"></script>
+    <link rel="stylesheet" href="/assets/index-bebea7d3.css">
   </head>
 
   <body>
+    <aside id="body-info" class="body-info" hidden aria-live="polite">
+      <button id="close-info" class="body-info__close" type="button" aria-label="Close body information">×</button>
+      <span id="body-type" class="body-info__eyebrow"></span>
+      <h2 id="body-name"></h2>
+      <p id="body-fact"></p>
+      <a id="body-source" target="_blank" rel="noopener noreferrer">Explore at NASA ↗</a>
+    </aside>
+    <div id="controls-panel" aria-label="Solar system controls"></div>
     
   </body>
 </html>
